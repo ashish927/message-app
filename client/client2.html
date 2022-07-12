@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Client1</title>
+    <style media="screen">
+      .chatbox {
+        width: 500px;
+        height: 200px;
+        overflow: auto;
+        border: 5px solid black;
+      }
+      input {
+        width: 500px;
+        height: 25px;
+      }
+      #btn {
+        width: 100px;
+        height: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="chatbox"></div>
+    <br>
+    <div class="send">
+      <form class="" method="post">
+        <input type="text" id="text" value="">
+        <input type="submit" name="button" id="btn" value="Send">
+      </form>
+    </div>
+
+    <script type="text/javascript">
+    var socket
+    connect()
+
+    function connect() {
+
+      socket = new WebSocket("ws://localhost:3000/")
+
+      var chatbox = document.querySelector(".chatbox")
+
+      var key = "abc123"
+
+      socket.onopen = function() {
+        socket.send(JSON.stringify({
+          type : "key",
+          name : "Aryan",
+          data : key
+        }))
+        console.log("socket connected");
+      }
+
+      socket.onmessage = function (event) {
+        var response = JSON.parse(event.data)
+        // chatbox.innerHTML += response.name + ": " + response.data + "<br>"
+        chatbox.innerHTML += response.name +  " : " + response.data + "<br>"
+
+        if (response.data == 1) {
+          chatbox.innerHTML += "On <br>"
+        } else if (response.data == 0) {
+          chatbox.innerHTML += "Off <br>"
+        }
+
+        chatbox.scrollTop = chatbox.scrollHeight
+      }
+
+      document.querySelector("#btn").addEventListener('click', function (e) {
+        e.preventDefault()
+        var text = document.querySelector("#text").value.trim()
+        if (text == "") {
+          return false
+        }
+        chatbox.innerHTML += "You : " + text + "<br>"
+        socket.send(JSON.stringify({
+          type : "message",
+          data : text
+        }))
+        document.querySelector("#text").value = ""
+        chatbox.scrollTop = chatbox.scrollHeight
+      })
+
+      socket.onclose = function (err) {
+        console.log("closed");
+        console.log(err);
+        // chatbox.innerHTML += "Connection Closed! Retrying <br>"
+        // chatbox.scrollTop = chatbox.scrollHeight
+
+        setTimeout(function() {
+          reconnect = true
+          connect()
+        }, 1000)
+      }
+
+      socket.onerror = function (err) {
+        console.log(err)
+      }
+    }
+    </script>
+
+  </body>
+</html>
